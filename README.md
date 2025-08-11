@@ -1,4 +1,4 @@
-# Liar's Dice (Pirates of the Caribbean)
+# Liar's Dice (Pirates of the Caribbean) - Multiplayer Game
 
 ## History
 
@@ -12,19 +12,22 @@ No jogo, cada participante inicia com um copo e cinco dados. Todos sacodem seus 
 
 Diferente de outras versões comerciais, nessa variante mostrada nos filmes, os Ases **não são curingas**.
 
-## Appearances
+## Subject Proposal
+Desenvolver um protocolo de camada de aplicação para um jogo de dados multijogador, permitindo que múltiplos clientes se conectem a um servidor central, formem partidas automaticamente e troquem mensagens para jogar em turnos. O protocolo define as interações entre clientes e o servidor, incluindo entrada em partidas, execução de jogadas, contagem de pontos e término da partida.
 
-### No Filme
+## Curiosities
+
+### Film
 
 Em *Pirates of the Caribbean: Dead Man’s Chest*, o jogo é jogado por Will Turner, Bootstrap Bill Turner e Davy Jones. Will aposta sua alma em troca da chave do Cofre do Homem-Morto. Bootstrap Bill finge perder para salvar o filho, permitindo que Will roube a chave e escape.
 
-### Em Outros Meios
+### In other media
 
 - Em jogos como *Pirates of the Caribbean: At World’s End (videogame)*, o jogo aparece como “Pirate Dice”.
 - Na versão LEGO para videogames, a mecânica muda: apenas três dados são usados, sem copos.
 
 ---
 
-**Referência:**  
+**References:**  
 Conteúdo baseado na página *“Liar’s Dice”* do *Pirates of the Caribbean Wiki*, com contribuições de seus editores, disponível sob licença CC-BY-SA.  
 [pirates.fandom.com](https://pirates.fandom.com/wiki/Liar%27s_Dice) | [potc-trilogy.fandom.com](https://potc-trilogy.fandom.com/wiki/Liar%27s_Dice)

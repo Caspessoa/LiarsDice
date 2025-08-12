@@ -1,0 +1,1 @@
+# Definição dos tipos de mensagem e formatação JSON

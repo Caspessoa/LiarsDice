@@ -1,0 +1,1 @@
+# Funções e regras do Liar's Dice

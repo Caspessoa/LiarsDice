@@ -1,7 +1,6 @@
 liars_dice/
 ├── server.py      # Lida com conexões e lógica do jogo
 ├── client.py      # Interface de terminal para o jogador
-├── game.py        # Funções e regras do Liar's Dice
 ├── protocol.py    # Definição dos tipos de mensagem e formatação JSON
 └── README.md
 

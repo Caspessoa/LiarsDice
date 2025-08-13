@@ -1,24 +1,30 @@
 import json
 
-def encode_message(msg_type, payload=None, player_id=None, game_id=None):
+def encode_message(msg_type, payload=None):
     """
-    Cria uma string JSON a partir de um dicionário.
-    - msg_type: tipo da mensagem (ex: 'READY', 'BET', 'CHALLENGE', etc.)
-    - payload: dados adicionais (ex: aposta, resultado da rodada)
-    - player_id: identificador único do jogador
-    - game_id: identificador da partida (pode ser None neste caso)
-    Retorna: string JSON pronta para envio via socket.
+    Codifica uma mensagem para envio via socket.
+
+    Parâmetros:
+        msg_type (str) - Tipo da mensagem, por exemplo:
+            'info', 'error', 'game_update', 'your_turn', etc.
+        payload (dict) - Conteúdo adicional da mensagem.
+
+    Retorna:
+        bytes - A mensagem convertida para JSON e depois para bytes.
     """
     return json.dumps({
         "type": msg_type,
-        "player_id": player_id,
-        "game_id": game_id,
         "payload": payload
-    })
+    }).encode('utf-8')
 
-def decode_message(msg_str):
+def decode_message(msg_bytes):
     """
-    Converte string JSON recebida em um dicionário Python.
-    É usada no lado do servidor e do cliente para interpretar mensagens.
+    Decodifica bytes recebidos de um socket para um dicionário Python.
+
+    Parâmetros:
+        msg_bytes (bytes) - Mensagem recebida no formato JSON.
+
+    Retorna:
+        dict - Mensagem convertida de JSON para dicionário Python.
     """
-    return json.loads(msg_str)
+    return json.loads(msg_bytes.decode('utf-8'))

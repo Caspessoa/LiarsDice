@@ -42,7 +42,7 @@ game_should_end = False
 LOG_FILE = "server_log.txt"
 
 def _ts():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
 def log(event, **fields):
     """
@@ -285,7 +285,7 @@ def handle_client(sock, addr):
                 break
             msg = decode_message(raw)
             log("RECV", frm=name, raw=msg)
-            
+
             with game_lock:
                 # Valida turno
                 if clients[current_turn_index]['socket'] != sock:
@@ -297,10 +297,29 @@ def handle_client(sock, addr):
 
                 if msg_type == 'bid':
                     try:
-                        new_bid = {"quantity": int(payload['quantity']), "face": int(payload['face'])}
-                        # Valida que a aposta sobe (quantidade ou mesma quantidade com face maior)
-                        if (new_bid['quantity'] > last_bid['quantity'] or
-                            (new_bid['quantity'] == last_bid['quantity'] and new_bid['face'] > last_bid['face'])):
+                        new_quantity = int(payload['quantity'])
+                        new_face = int(payload['face'])
+                        new_bid = {"quantity": new_quantity, "face": new_face}
+                        
+                        # --- INÍCIO DA CORREÇÃO ---
+                        total_dice_in_play = sum(p['dice_count'] for p in player_data.values())
+
+                        # Validação 1: Face do dado deve ser entre 1 e 6
+                        if not (1 <= new_face <= 6):
+                            send_to(sock, "error", {"message": "Aposta inválida. A face do dado deve ser entre 1 e 6."})
+                            send_to(sock, "your_turn", None)
+                            continue
+
+                        # Validação 2: Quantidade apostada não pode exceder o total de dados em jogo
+                        if new_quantity > total_dice_in_play:
+                            send_to(sock, "error", {"message": f"Aposta inválida. Existem apenas {total_dice_in_play} dados na mesa."})
+                            send_to(sock, "your_turn", None)
+                            continue
+                        # --- FIM DA CORREÇÃO ---
+
+                        # Validação 3: Aposta deve ser maior que a anterior
+                        if (new_quantity > last_bid['quantity'] or
+                            (new_quantity == last_bid['quantity'] and new_face > last_bid['face'])):
 
                             last_bid = new_bid
                             log("BID", player=name, bid=last_bid)
@@ -314,6 +333,7 @@ def handle_client(sock, addr):
                         else:
                             send_to(sock, "error", {"message": "Aposta inválida. Aumente a quantidade ou a face."})
                             send_to(sock, "your_turn", None)
+                            
                     except (ValueError, TypeError, KeyError):
                         send_to(sock, "error", {"message": "Formato de aposta inválido."})
                         send_to(sock, "your_turn", None)
@@ -384,7 +404,7 @@ def main():
         # Loop ocioso do servidor até fim do jogo
         while not game_should_end:
             time.sleep(0.5)
-            
+
     finally:
         print("Encerrando servidor...")
         for c in clients:

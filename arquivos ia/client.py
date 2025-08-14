@@ -6,129 +6,173 @@ import sys
 import time
 from protocol import encode_message, decode_message
 
+# Imports da biblioteca rich para uma UI avançada
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+
+# Cria uma instância do console do rich para gerenciar a exibição
+console = Console()
+
+# Dicionário que mapeia o número da face do dado para o ícone.
+DICE_ICONS = {
+    1: "⚀", 2: "⚁", 3: "⚂",
+    4: "⚃", 5: "⚄", 6: "⚅"
+}
+
 # Variáveis globais para armazenar estado do cliente
-my_turn = False           # Indica se é a vez do jogador
-my_dice = []              # Lista de dados do jogador
-game_state = {}           # Estado geral do jogo (todos os jogadores)
-log_file = "partida_log.txt"  # Arquivo onde o histórico será salvo
+my_turn = False
+my_dice = []
+game_state = {}
+log_file = "partida_log.txt"
+
+def format_dice(dice_list):
+    """
+    Formata uma lista de dados como ícones.
+    """
+    return ' '.join(DICE_ICONS.get(d, str(d)) for d in dice_list)
 
 def log_event(text):
     """
     Salva um evento no arquivo de log.
-    Útil para gerar um histórico da partida e usar no relatório.
     """
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(text + "\n")
 
 def clear_screen():
     """
-    Limpa a tela do terminal (compatível com Windows e Linux).
+    Limpa a tela do terminal.
     """
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def print_game_state():
     """
-    Exibe na tela:
-    - Seus dados
-    - Quantos dados cada jogador ainda tem
-    - Quem está jogando
-    - Última aposta feita
+    Exibe o estado do jogo na tela usando painéis da biblioteca rich.
     """
     clear_screen()
-    print("====== DADO MENTIROSO ======")
-    print(f"Seus dados: {my_dice}\n")
 
-    # Mostra jogadores e seus dados restantes
+    player_lines = []
     if game_state.get('players'):
+        block_width = 50
         for p in game_state['players']:
-            t = "<- SUA VEZ" if p['name'] == game_state.get('current_turn') else ""
-            print(f"{p['name']}: {p['dice_count']} dados {t}")
+            left_part = Text(p['name'])
+            right_part_text = f"{p['dice_count']} dados"
+            
+            # Adiciona e estiliza o indicador de turno
+            if p['name'] == game_state.get('current_turn'):
+                right_part = Text.from_markup(f"{right_part_text}  [bold green]<- TURNO ATUAL[/bold green]")
+            else:
+                right_part = Text(right_part_text)
+            
+            # Calcula o preenchimento para alinhar nas extremidades
+            padding = " " * (block_width - len(left_part) - len(right_part))
+            line = Text.assemble(left_part, padding, right_part)
+            player_lines.append(line)
+    
+    player_text = Text("\n").join(player_lines)
 
-    # Mostra a última aposta, se houver
+    # Cria o conteúdo para a aposta na mesa
     if game_state.get('last_bid') and game_state['last_bid']['quantity'] > 0:
         b = game_state['last_bid']
-        print(f"\nAposta na mesa: {b['quantity']}x {b['face']}")
+        face_char = DICE_ICONS.get(b['face'], str(b['face']))
+        bid_text = Text.from_markup(f"Aposta na mesa: [bold yellow]{b['quantity']}x {face_char}[/bold yellow]")
     else:
-        print("\nNenhuma aposta ainda.")
+        bid_text = Text("Nenhuma aposta ainda.")
+
+    # Monta o conteúdo principal do painel
+    main_content = Text("\n\n").join([
+        player_text,
+        bid_text
+    ])
+
+    # Cria e exibe o painel principal com título e subtítulo
+    console.print(
+        Panel(
+            main_content,
+            title="[bold cyan]LIAR'S DICE[/bold cyan]",
+            subtitle=Text.from_markup(f"Seus dados: [bold yellow]{format_dice(my_dice)}[/bold yellow]"),
+            border_style="blue"
+        )
+    )
 
 def listen(sock):
     """
-    Thread responsável por ouvir mensagens do servidor
-    e atualizar o estado do cliente.
+    Thread responsável por ouvir mensagens do servidor e atualizar o estado.
     """
     global my_turn, my_dice, game_state
     while True:
         try:
             raw = sock.recv(4096)
             if not raw:
-                print("\nConexão fechada pelo servidor.")
                 break
-            
+
             msg = decode_message(raw)
             tipo = msg.get('type')
             payload = msg.get('payload')
 
-            # Início de nova rodada (dados do jogador)
             if tipo == 'round_start':
                 my_dice = payload['dice']
                 log_event(f"Nova rodada - seus dados: {my_dice}")
 
-            # Atualização geral do jogo
             elif tipo == 'game_update':
                 game_state = payload['state']
                 print_game_state()
-                print(payload['message'])
+                console.print(f"[dim]{payload['message']}[/dim]")
                 log_event(f"Atualização: {payload['message']}")
 
-            # É a vez do jogador
             elif tipo == 'your_turn':
                 my_turn = True
-                print("\nSua vez! Digite aposta (ex: '3 4') ou 'duvido'")
+                console.print("\nSua vez! Digite aposta (ex: '3 4') ou 'duvido'")
                 log_event("Sua vez de jogar.")
 
-            # Mensagens de informação ou erro
             elif tipo in ['info', 'error']:
-                print(f"\n[SERVIDOR] {payload['message']}")
-                log_event(f"[SERVIDOR] {payload['message']}")
+                message = payload['message']
+                style = ""
+                # Colore mensagens de resultado com base no conteúdo
+                if 'perde 1 dado' in message:
+                    style = "red" if 'VERDADEIRA' in message else "green"
+                elif 'entrou no jogo' in message:
+                    style = "yellow"
 
-            # Revelação final de todos os dados após 'duvido'
+                console.print(f"\n[bold {style}][SERVIDOR] {message}[/bold {style}]")
+                log_event(f"[SERVIDOR] {message}")
+
             elif tipo == 'reveal_all':
                 dados_revelados = payload['dice_data']
-                print("\n=== DADOS REVELADOS ===")
+                
+                reveal_lines = []
                 for entry in dados_revelados:
-                    print(f"{entry['player']}: {entry['dice']}")
-                print("=======================")
+                    formatted_hand = format_dice(entry['dice'])
+                    reveal_lines.append(f"[bold]{entry['player']}:[/bold] {formatted_hand}")
+
+                console.print(Panel("\n".join(reveal_lines), title="[yellow]DADOS REVELADOS[/yellow]", border_style="yellow"))
                 log_event(f"Revelação final: {dados_revelados}")
 
-            # Fim do jogo
             elif tipo == 'game_over':
                 print_game_state()
-                print(f"\n!!! {payload['message']} !!!")
+                console.print(f"\n[bold magenta]!!! {payload['message']} !!![/bold magenta]")
                 log_event(f"FIM: {payload['message']}")
                 sock.close()
-                os._exit(0)  # Encerra o cliente
+                os._exit(0)
 
         except (ConnectionAbortedError, ConnectionResetError, json.JSONDecodeError):
-            print("\nConexão com o servidor foi perdida.")
+            console.print("\n[bold red]Conexão com o servidor foi perdida.[/bold red]")
             sock.close()
             os._exit(1)
-        except Exception:
-            # Em caso de qualquer outra exceção, encerra a thread
+        except Exception as e:
+            console.print(f"\n[bold red]Ocorreu um erro inesperado: {e}[/bold red]")
             break
 
 def main():
     global my_turn
 
-    # Solicita dados de conexão
     host = input("IP do servidor (padrão: 127.0.0.1): ") or "127.0.0.1"
     port = 65432
     nome = input("Seu nome: ")
 
-    # Apaga log antigo, se existir
     if os.path.exists(log_file):
         os.remove(log_file)
 
-    # Cria socket e conecta ao servidor
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((host, port))
@@ -136,34 +180,27 @@ def main():
         print(f"Falha ao conectar: {e}")
         return
 
-    # Envia o nome do jogador para o servidor
     sock.sendall(encode_message('set_name', {'name': nome}))
 
-    # Inicia a thread que escuta o servidor
     threading.Thread(target=listen, args=(sock,), daemon=True).start()
 
-    # Loop principal do jogador
     while True:
         if my_turn:
             cmd = input("> ").strip().lower()
 
             if cmd == 'duvido':
-                # Envia comando de challenge
                 sock.sendall(encode_message('challenge'))
                 my_turn = False
-
             elif len(cmd.split()) == 2:
                 try:
-                    # Envia aposta (quantidade, face)
                     q, f = map(int, cmd.split())
                     sock.sendall(encode_message('bid', {'quantity': q, 'face': f}))
                     my_turn = False
                 except ValueError:
-                    print("Formato inválido. Use dois números inteiros.")
+                    console.print("[red]Formato inválido. Use dois números inteiros.[/red]")
             else:
-                print("Comando inválido.")
+                console.print("[red]Comando inválido.[/red]")
         else:
-            # Pausa para não consumir 100% da CPU enquanto espera o turno
             time.sleep(0.1)
 
 if __name__ == "__main__":

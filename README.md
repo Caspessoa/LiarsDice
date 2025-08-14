@@ -4,6 +4,7 @@
 
 ## Proposta
 Desenvolver um protocolo de camada de aplicação para um jogo de dados multijogador, permitindo que múltiplos clientes se conectem a um servidor central, formem partidas automaticamente e troquem mensagens para jogar em turnos. O protocolo define as interações entre clientes e o servidor, incluindo entrada em partidas, execução de jogadas, contagem de pontos e término da partida.
+
 ---
 Trabalho realizado como tarefa final da disciplina.
 Disciplina: **Redes de Computadores** - UFPEL

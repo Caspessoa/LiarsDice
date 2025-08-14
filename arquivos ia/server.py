@@ -1,6 +1,6 @@
 import socket
 import threading
-import random
+import random # rolar os dados
 import time
 import json
 import os
@@ -10,7 +10,7 @@ from protocol import encode_message, decode_message
 # =======================
 # Configurações do Servidor
 # =======================
-HOST = '0.0.0.0'
+HOST = '0.0.0.0' # Não restringe conexões apenas do próprio computador. Permite todas as interfaces de rede disponíveis.
 PORT = 65432
 NUM_PLAYERS = 2
 
@@ -27,9 +27,11 @@ RULE_WILD_ONES = True
 # =======================
 clients = []            # [{"socket": sock, "addr": (ip, port)}]
 player_data = {}        # {sock: {"name": str, "dice_count": int, "dice_roll": [int,...]}}
-# CORREÇÃO: Usar RLock (Reentrant Lock) para permitir que a mesma thread
+
+# Usamos RLock (Reentrant Lock) para permitir que a mesma thread
 # adquira o lock múltiplas vezes. Isso evita o deadlock quando uma função
 # com lock (handle_challenge) chama outra função com lock (start_new_round).
+
 game_lock = threading.RLock()
 game_started = False
 current_turn_index = 0
@@ -75,6 +77,7 @@ def get_local_ip():
 def get_player_name(sock):
     return player_data.get(sock, {}).get("name", f"?({sock.fileno()})")
 
+# Funções "empacotadoras" -> centralizam a lógica de envio
 def send_to(sock, msg_type, payload):
     """
     Envia uma mensagem para um cliente e registra no log.
@@ -92,6 +95,7 @@ def broadcast(msg_type, payload):
     for c in list(clients):
         send_to(c["socket"], msg_type, payload)
 
+# Implementa a lógica central do jogo
 def count_matches_in_hand(face, hand):
     """
     Conta quantos dados da mão 'hand' batem com a aposta considerando a regra do coringa.
@@ -361,7 +365,7 @@ def main():
             pass
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, PORT))
+    server.bind((HOST, PORT)) #"Liga" o socket do servidor ao endereço de rede e à porta especificados
     server.listen(NUM_PLAYERS)
     print(f"Servidor iniciado em {get_local_ip()}:{PORT}")
     log("SERVER_START", host=get_local_ip(), port=PORT, players_needed=NUM_PLAYERS)

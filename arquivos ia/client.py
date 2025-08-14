@@ -1,12 +1,17 @@
-import socket
-import threading
+import socket # permite criar, conectar, enviar e receber dados em "soquetes"
+import threading # usamos para ouvir o servidor e esperar pelo input do usuário ao mesmo tempo.
 import json
-import os
-import sys
-import time
+
+#################
+#bibs de sistema#
+import os #######
+import sys ######
+import time #####
+#################
 from protocol import encode_message, decode_message
 
 # Variáveis globais para armazenar estado do cliente
+# Permite comunicação direta entre Thread Princ. e Sec. (sinalização)
 my_turn = False           # Indica se é a vez do jogador
 my_dice = []              # Lista de dados do jogador
 game_state = {}           # Estado geral do jogo (todos os jogadores)
@@ -59,14 +64,14 @@ def listen(sock):
     global my_turn, my_dice, game_state
     while True:
         try:
-            raw = sock.recv(4096)
+            raw = sock.recv(4096) # chamada bloqueante -> thread para e aguarda dados do servidor através da conexão sock. Lê até 4096 bytes e continua
             if not raw:
                 print("\nConexão fechada pelo servidor.")
                 break
             
-            msg = decode_message(raw)
-            tipo = msg.get('type')
-            payload = msg.get('payload')
+            msg = decode_message(raw) # decodifica a mensagem recebida
+            tipo = msg.get('type') # extrai o tipo da mensagem
+            payload = msg.get('payload') # extrai os dados secundários da mensagem
 
             # Início de nova rodada (dados do jogador)
             if tipo == 'round_start':
@@ -82,7 +87,7 @@ def listen(sock):
 
             # É a vez do jogador
             elif tipo == 'your_turn':
-                my_turn = True
+                my_turn = True # crucial. Desbloqueia a thread principal para a ação do jogador.
                 print("\nSua vez! Digite aposta (ex: '3 4') ou 'duvido'")
                 log_event("Sua vez de jogar.")
 
@@ -108,6 +113,7 @@ def listen(sock):
                 sock.close()
                 os._exit(0)  # Encerra o cliente
 
+        # Robustez e detecção de erros
         except (ConnectionAbortedError, ConnectionResetError, json.JSONDecodeError):
             print("\nConexão com o servidor foi perdida.")
             sock.close()
@@ -129,9 +135,11 @@ def main():
         os.remove(log_file)
 
     # Cria socket e conecta ao servidor
+    # AF_INET -> protocolo IPV4 +
+    # SOCK_STREAM -> protocolo TCP
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        sock.connect((host, port))
+        sock.connect((host, port)) # outra chamada bloqueante
     except Exception as e:
         print(f"Falha ao conectar: {e}")
         return
@@ -141,11 +149,22 @@ def main():
 
     # Inicia a thread que escuta o servidor
     threading.Thread(target=listen, args=(sock,), daemon=True).start()
+    """
+    threading.Thread(...): Cria um objeto de thread.
+
+    target=listen: Diz à thread que a função que ela deve executar é a nossa função listen.
+
+    args=(sock,): Passa os argumentos necessários para a função listen (no caso, o objeto sock).
+
+    daemon=True: Uma configuração importante. Significa que esta thread é uma "serva" da thread principal. Se a thread principal for encerrada  por qualquer motivo, a thread listen também será encerrada automaticamente.
+
+    .start(): Inicia a execução da thread. A partir deste ponto, a função listen está rodando em segundo plano.
+    """
 
     # Loop principal do jogador
     while True:
-        if my_turn:
-            cmd = input("> ").strip().lower()
+        if my_turn: # Executa esta parte do IF assim que a função listen envia 'your_turn'
+            cmd = input("> ").strip().lower() # Bloqueia thread até que o usuário digite algo
 
             if cmd == 'duvido':
                 # Envia comando de challenge

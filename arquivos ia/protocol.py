@@ -1,4 +1,8 @@
-import json
+import json #Importa a biblioteca json nativa do Python.
+""" 
+O JSON (JavaScript Object Notation) é um formato de texto leve e legível que serve como um intermediário. 
+Nós convertemos nosso dicionário Python em uma string de texto formatada em JSON, enviamos essa string pela rede e, no outro lado, a convertemos de volta para um dicionário.
+"""
 
 def encode_message(msg_type, payload=None):
     """
@@ -10,7 +14,7 @@ def encode_message(msg_type, payload=None):
         payload (dict) - Conteúdo adicional da mensagem.
 
     Retorna:
-        bytes - A mensagem convertida para JSON e depois para bytes.
+        bytes - A mensagem é convertida para JSON (.dumps) e depois para bytes (.encode).
     """
     return json.dumps({
         "type": msg_type,
@@ -19,7 +23,7 @@ def encode_message(msg_type, payload=None):
 
 def decode_message(msg_bytes):
     """
-    Decodifica bytes recebidos de um socket para um dicionário Python.
+    Decodifica bytes recebidos de um socket para um dicionário Python (.loads).
 
     Parâmetros:
         msg_bytes (bytes) - Mensagem recebida no formato JSON.

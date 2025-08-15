@@ -58,22 +58,23 @@ def print_game_state():
 
     player_lines = []
     if game_state.get('players'):
-        block_width = 50
+        block_width = 50  # Largura do bloco de texto para alinhamento
         for p in game_state['players']:
+            # A parte da esquerda começa apenas com o nome
             left_part = Text(p['name'])
-            right_part_text = f"{p['dice_count']} dados"
-            
-            # Adiciona e estiliza o indicador de turno
+            # A parte da direita é sempre a contagem de dados
+            right_part = Text(f"{p['dice_count']} dados")
+
+            # Adiciona o indicador de turno à parte esquerda, se for o caso
             if p['name'] == game_state.get('current_turn'):
-                right_part = Text.from_markup(f"{right_part_text}  [bold green]<- TURNO ATUAL[/bold green]")
-            else:
-                right_part = Text(right_part_text)
-            
+                left_part.append("  ")  # Adiciona um espaço
+                left_part.append(Text.from_markup("[bold green]<- TURNO ATUAL[/bold green]"))
+
             # Calcula o preenchimento para alinhar nas extremidades
             padding = " " * (block_width - len(left_part) - len(right_part))
             line = Text.assemble(left_part, padding, right_part)
             player_lines.append(line)
-    
+
     player_text = Text("\n").join(player_lines)
 
     # Cria o conteúdo para a aposta na mesa
@@ -110,7 +111,7 @@ def listen(sock):
             raw = sock.recv(4096) # chamada bloqueante -> thread para e aguarda dados do servidor através da conexão sock. Lê até 4096 bytes e continua
             if not raw:
                 break
-            
+
             msg = decode_message(raw) # decodifica a mensagem recebida
             tipo = msg.get('type') # extrai o tipo da mensagem
             payload = msg.get('payload') # extrai os dados secundários da mensagem
@@ -144,7 +145,7 @@ def listen(sock):
 
             elif tipo == 'reveal_all':
                 dados_revelados = payload['dice_data']
-                
+
                 reveal_lines = []
                 for entry in dados_revelados:
                     formatted_hand = format_dice(entry['dice'])

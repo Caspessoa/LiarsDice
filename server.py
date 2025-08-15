@@ -304,8 +304,7 @@ def handle_client(sock, addr):
                         new_quantity = int(payload['quantity'])
                         new_face = int(payload['face'])
                         new_bid = {"quantity": new_quantity, "face": new_face}
-                        
-                        # --- INÍCIO DA CORREÇÃO ---
+
                         total_dice_in_play = sum(p['dice_count'] for p in player_data.values())
 
                         # Validação 1: Face do dado deve ser entre 1 e 6
@@ -319,7 +318,6 @@ def handle_client(sock, addr):
                             send_to(sock, "error", {"message": f"Aposta inválida. Existem apenas {total_dice_in_play} dados na mesa."})
                             send_to(sock, "your_turn", None)
                             continue
-                        # --- FIM DA CORREÇÃO ---
 
                         # Validação 3: Aposta deve ser maior que a anterior
                         if (new_quantity > last_bid['quantity'] or
@@ -337,7 +335,7 @@ def handle_client(sock, addr):
                         else:
                             send_to(sock, "error", {"message": "Aposta inválida. Aumente a quantidade ou a face."})
                             send_to(sock, "your_turn", None)
-                            
+
                     except (ValueError, TypeError, KeyError):
                         send_to(sock, "error", {"message": "Formato de aposta inválido."})
                         send_to(sock, "your_turn", None)

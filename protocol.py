@@ -1,6 +1,6 @@
 import json #Importa a biblioteca json nativa do Python.
 """ 
-O JSON (JavaScript Object Notation) é um formato de texto leve e legível que serve como um intermediário. 
+O JSON (JavaScript Object Notation) é um formato de texto leve e legível que serve como um intermediário.
 Nós convertemos nosso dicionário Python em uma string de texto formatada em JSON, enviamos essa string pela rede e, no outro lado, a convertemos de volta para um dicionário.
 """
 

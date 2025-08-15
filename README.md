@@ -5,6 +5,8 @@
 ## Proposta
 Desenvolver um protocolo de camada de aplicação para um jogo de dados multijogador, permitindo que múltiplos clientes se conectem a um servidor central, formem partidas automaticamente e troquem mensagens para jogar em turnos. O protocolo define as interações entre clientes e o servidor, incluindo entrada em partidas, execução de jogadas, contagem de pontos e término da partida.
 
+No universo de Piratas do Caribe, após Davy Jones se tornar o temido capitão do Holandês Voador, o jogo virou passatempo entre sua tripulação amaldiçoada — apostando o único valor que lhes restava: anos de servidão.
+
 
 ## Instruções para execução
 > Faça download dos arquivos

@@ -29,7 +29,7 @@ Desenvolver um protocolo de camada de aplicação para um jogo de dados multijog
 
 ---
 
-> OBS: caso haja erro relacionado às importações das bibliotecas, é possível instalá-las através do argumento pip (o erro não ocorrerá caso abra pelos executáveis.
+> OBS: caso haja erro relacionado às importações das bibliotecas, é possível instalá-las através do argumento pip (o erro não ocorrerá caso abra pelos executáveis).
 
 > Ex: ```$ pip install rich```, e assim por diante enquanto o seu computador não reconhecer as bibliotecas utilizadas.
 
